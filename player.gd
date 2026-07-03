@@ -1,9 +1,9 @@
 extends CharacterBody3D
 
 ## Walking speed in meters per second (default movement).
-@export var walk_speed: float = 2.5
+@export var walk_speed: float = 4.0
 ## Running speed while holding Shift.
-@export var run_speed: float = 6.0
+@export var run_speed: float = 8.5
 ## Upward velocity applied when jumping. ~8 clears roughly 3.3m — enough to land
 ## on the crates/plateau (2m) and the platform (3m).
 @export var jump_velocity: float = 8.0

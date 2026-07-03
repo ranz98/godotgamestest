@@ -224,8 +224,10 @@ func _can_move() -> bool:
 
 func _update_hint_and_hide() -> void:
 	if _is_seeker():
+		if _hidden:
+			_set_hidden(false)  # an infected hider un-hides when they turn seeker
 		if _hint_label:
-			_hint_label.text = "You are the SEEKER — find and tag the hiders!"
+			_hint_label.text = "You are a SEEKER — find and tag the hiders!"
 		return
 
 	# Caught hiders are revealed and can't re-hide.
@@ -284,8 +286,12 @@ func _seeker_try_tag() -> void:
 			continue
 		if _game.is_caught(target_id):
 			continue
-		# Ask the host to register the catch (host validates).
-		_game.request_catch.rpc_id(1, target_id)
+		# Register the catch on the host (call directly when we ARE the host,
+		# since an rpc_id-to-self on a call_remote RPC would not fire).
+		if multiplayer.is_server():
+			_game.request_catch(target_id)
+		else:
+			_game.request_catch.rpc_id(1, target_id)
 
 # --- Visuals (run on every peer) -------------------------------------
 

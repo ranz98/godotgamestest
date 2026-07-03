@@ -14,6 +14,7 @@ class_name HideSeekGame
 
 enum Phase { LOBBY, HIDING, SEEKING, ENDED }
 enum Role { HIDER, SEEKER }
+enum Mode { CLASSIC, INFECTION }  # INFECTION: caught hiders become seekers
 
 const PLAYER_SCENE := preload("res://player.tscn")
 const PORT := 24565
@@ -30,6 +31,8 @@ var time_left: float = 0.0
 var winner: int = 0                # 0 = none, 1 = hiders, 2 = seekers
 var roles: Dictionary = {}         # peer_id -> Role
 var caught: Array = []             # peer_ids of caught hiders
+var mode: int = Mode.CLASSIC       # game mode (host picks in lobby)
+var scores: Dictionary = {}        # peer_id -> points, kept across the series
 
 @onready var _players: Node3D = $Players
 @onready var _spawner: MultiplayerSpawner = $PlayerSpawner
@@ -44,6 +47,8 @@ var caught: Array = []             # peer_ids of caught hiders
 @onready var _lobby_status: Label = $HUD/Lobby/Menu/StatusLabel
 @onready var _count_label: Label = $HUD/Lobby/Menu/CountLabel
 @onready var _start_btn: Button = $HUD/Lobby/Menu/StartButton
+@onready var _mode_btn: Button = $HUD/Lobby/Menu/ModeButton
+@onready var _scoreboard: Label = $HUD/Scoreboard
 @onready var _timer_label: Label = $HUD/TimerLabel
 @onready var _role_label: Label = $HUD/RoleLabel
 @onready var _announce: Label = $HUD/Announce
@@ -57,6 +62,7 @@ var _spawn_index: int = 0
 var _announce_text: String = ""
 var _announce_timer: float = 0.0
 var _prev_roles: Dictionary = {}  # last round's roles, so the next round can swap
+var _start_hiders: int = 0        # hiders at round start (for the seeker-win check)
 
 func _ready() -> void:
 	randomize()
@@ -71,7 +77,15 @@ func _ready() -> void:
 	_join_btn.pressed.connect(func(): join(_ip_edit.text))
 	_start_btn.pressed.connect(start_match)
 	_rematch_btn.pressed.connect(start_match)
+	_mode_btn.pressed.connect(toggle_mode)
 	_update_hud()
+
+func toggle_mode() -> void:
+	if not multiplayer.is_server():
+		return
+	if phase != Phase.LOBBY and phase != Phase.ENDED:
+		return
+	mode = Mode.INFECTION if mode == Mode.CLASSIC else Mode.CLASSIC
 
 # --- Connection setup -------------------------------------------------
 
@@ -164,6 +178,10 @@ func start_match() -> void:
 	if ids.is_empty():
 		return
 	_assign_roles(ids)
+	_start_hiders = 0
+	for id in ids:
+		if roles[id] == Role.HIDER:
+			_start_hiders += 1
 	caught = []
 	winner = 0
 	phase = Phase.HIDING
@@ -245,22 +263,36 @@ func request_catch(hider_id: int) -> void:
 		return
 	if hider_id in caught:
 		return
-	caught = caught + [hider_id]  # reassign so the synchronizer sees the change
+	# Credit the catcher (get_remote_sender_id() is 0 for the host's own call).
+	var seeker_id := multiplayer.get_remote_sender_id()
+	if seeker_id == 0:
+		seeker_id = multiplayer.get_unique_id()
+	scores[seeker_id] = int(scores.get(seeker_id, 0)) + 1
+	if mode == Mode.INFECTION:
+		roles[hider_id] = Role.SEEKER  # infected -> joins the seekers, keeps playing
+	else:
+		caught = caught + [hider_id]  # reassign so the synchronizer sees the change
 	_check_seeker_win()
 
 func _check_seeker_win() -> void:
-	var hiders := _hider_ids()
-	if hiders.is_empty():
+	# Seekers win once no uncaught hiders remain (works for both modes:
+	# classic marks them caught, infection converts them to seekers).
+	if _start_hiders <= 0:
 		return
-	for id in hiders:
-		if id not in caught:
+	for id in _player_ids():
+		if get_role(id) == Role.HIDER and not is_caught(id):
 			return
-	_end_match(2)  # all hiders caught -> seekers win
+	_end_match(2)
 
 func _end_match(who: int) -> void:
 	phase = Phase.ENDED
 	winner = who
 	time_left = 0.0
+	if who == 1:
+		# Hiders win on timeout -> reward every hider still standing.
+		for id in _player_ids():
+			if get_role(id) == Role.HIDER and not is_caught(id):
+				scores[id] = int(scores.get(id, 0)) + 1
 
 # --- Queries used by players ------------------------------------------
 
@@ -298,6 +330,8 @@ func _update_hud() -> void:
 		_timer_label.visible = false
 		_role_label.visible = false
 		_announce.visible = false
+		_mode_btn.visible = false
+		_scoreboard.visible = false
 		_menu_camera.current = true
 		return
 
@@ -310,18 +344,24 @@ func _update_hud() -> void:
 	_join_btn.visible = false
 	_ip_edit.visible = false
 	_count_label.visible = (phase == Phase.LOBBY)
+	_mode_btn.visible = (phase == Phase.LOBBY)
 	if phase == Phase.LOBBY:
 		_count_label.text = "Players: %d" % _players.get_child_count()
 		_lobby_status.text = "In lobby"
 		# Only the host can start, and only with at least one player.
 		_start_btn.visible = multiplayer.is_server()
 		_start_btn.disabled = _players.get_child_count() < 1
+		_mode_btn.disabled = not multiplayer.is_server()
+		_mode_btn.text = "Mode: %s" % ("Infection" if mode == Mode.INFECTION else "Classic")
 
 	_timer_label.visible = in_match
 	_role_label.visible = in_match
 	_announce.visible = in_match or ended
 	_result.visible = ended
 	_rematch_btn.visible = ended and multiplayer.is_server()
+	_scoreboard.visible = in_match or ended
+	if _scoreboard.visible:
+		_scoreboard.text = _scoreboard_text()
 
 	var my_id := multiplayer.get_unique_id()
 
@@ -361,3 +401,17 @@ func _update_hud() -> void:
 func _format_time(t: float) -> String:
 	var s: int = int(max(0.0, ceil(t)))
 	return "%d:%02d" % [s / 60, s % 60]
+
+func _scoreboard_text() -> String:
+	var ids := _player_ids()
+	ids.sort()
+	var lines: Array = ["— Scores —"]
+	for id in ids:
+		var tag := "Hider"
+		if is_caught(id):
+			tag = "Caught"
+		elif get_role(id) == Role.SEEKER:
+			tag = "Seeker"
+		var who := "Host" if id == 1 else "Player %d" % id
+		lines.append("%s (%s): %d" % [who, tag, int(scores.get(id, 0))])
+	return "\n".join(lines)

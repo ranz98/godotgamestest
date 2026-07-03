@@ -95,8 +95,10 @@ func _ready() -> void:
 	_update_hud()
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Esc toggles the graphics menu while connected.
-	if _net_active and event.is_action_pressed("ui_cancel"):
+	# Esc toggles the graphics menu, but only during an active match (so it never
+	# covers the lobby/result controls). It's a non-blocking overlay: the match
+	# keeps running, so change graphics between the action, not mid-chase.
+	if event.is_action_pressed("ui_cancel") and (phase == Phase.HIDING or phase == Phase.SEEKING):
 		_menu_open = not _menu_open
 		get_viewport().set_input_as_handled()
 
@@ -296,6 +298,9 @@ func _process(delta: float) -> void:
 
 # Single source of truth for the mouse cursor + pause-menu visibility.
 func _update_mouse_and_menu() -> void:
+	# Auto-close the graphics menu when the match ends / returns to lobby.
+	if phase != Phase.HIDING and phase != Phase.SEEKING:
+		_menu_open = false
 	_pause_menu.visible = _menu_open
 	if not _net_active:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

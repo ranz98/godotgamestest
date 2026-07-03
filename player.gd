@@ -88,11 +88,9 @@ func _physics_process(delta: float) -> void:
 		_apply_visuals()
 		return
 
-	var menu := _game != null and _game.menu_open()
-	if not menu:
-		_update_hint_and_hide()
+	_update_hint_and_hide()
 
-	if menu or not _can_move():
+	if not _can_move():
 		velocity.x = 0.0
 		velocity.z = 0.0
 		if not is_on_floor():

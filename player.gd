@@ -7,6 +7,8 @@ extends CharacterBody3D
 @export var jump_velocity: float = 8.0
 ## How quickly the model turns to face its movement direction (higher = snappier).
 @export var turn_speed: float = 12.0
+## How fast the character spins while holding the left mouse button (radians/sec).
+@export var spin_speed: float = 3.0
 ## Extra yaw applied to the model, in degrees. Set to 180 if the character runs backwards.
 @export var model_yaw_offset_deg: float = 0.0
 ## Node whose horizontal facing defines "forward" for movement (the camera pivot).
@@ -52,25 +54,58 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("jump") and is_on_floor():
 		velocity.y = jump_velocity
 
-	# WASD relative to where the camera is looking.
 	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	var direction := _camera_relative_direction(input_dir)
-	var moving := direction != Vector3.ZERO
+	var left_held := Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+	var right_held := Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 
-	if moving:
+	if left_held:
+		_spin_mode(delta, input_dir)
+	elif right_held:
+		_strafe_mode(input_dir)
+	else:
+		_default_mode(delta, input_dir)
+
+	move_and_slide()
+
+# LEFT mouse held: A/D spin the character in place, W/S drive along its facing.
+func _spin_mode(delta: float, input_dir: Vector2) -> void:
+	var spinning := absf(input_dir.x) > 0.01
+	if _model and spinning:
+		_model.rotation.y -= input_dir.x * spin_speed * delta
+
+	# Drive forward/back along the model's own facing (its +Z is forward).
+	var direction := Vector3.ZERO
+	if _model and absf(input_dir.y) > 0.01:
+		var facing := _model.global_transform.basis.z
+		facing.y = 0.0
+		direction = facing.normalized() * -input_dir.y
+
+	_apply_planar_velocity(direction)
+	_update_animation(direction != Vector3.ZERO or spinning)
+
+# RIGHT mouse held: move camera-relative WITHOUT turning the model (strafe).
+func _strafe_mode(input_dir: Vector2) -> void:
+	var direction := _camera_relative_direction(input_dir)
+	_apply_planar_velocity(direction)
+	_update_animation(direction != Vector3.ZERO)
+
+# No button: camera-relative movement, model turns to face the travel direction.
+func _default_mode(delta: float, input_dir: Vector2) -> void:
+	var direction := _camera_relative_direction(input_dir)
+	if direction != Vector3.ZERO and _model:
+		var target_yaw := atan2(direction.x, direction.z) + deg_to_rad(model_yaw_offset_deg)
+		_model.rotation.y = lerp_angle(_model.rotation.y, target_yaw, turn_speed * delta)
+	_apply_planar_velocity(direction)
+	_update_animation(direction != Vector3.ZERO)
+
+# Sets horizontal velocity toward `direction`, or decelerates to a stop if zero.
+func _apply_planar_velocity(direction: Vector3) -> void:
+	if direction != Vector3.ZERO:
 		velocity.x = direction.x * speed
 		velocity.z = direction.z * speed
-		# Rotate the model (not the body) to face the way it's running.
-		if _model:
-			var target_yaw := atan2(direction.x, direction.z) + deg_to_rad(model_yaw_offset_deg)
-			_model.rotation.y = lerp_angle(_model.rotation.y, target_yaw, turn_speed * delta)
 	else:
-		# Decelerate to a stop when no keys are held.
 		velocity.x = move_toward(velocity.x, 0.0, speed)
 		velocity.z = move_toward(velocity.z, 0.0, speed)
-
-	_update_animation(moving)
-	move_and_slide()
 
 # Converts 2D WASD input into a world direction based on the camera pivot's yaw,
 # flattened onto the ground plane.
@@ -87,10 +122,10 @@ func _camera_relative_direction(input_dir: Vector2) -> Vector3:
 	# input_dir.y is -1 for "up"/W, so negate it to move forward.
 	return (forward * -input_dir.y + right * input_dir.x).normalized()
 
-func _update_animation(moving: bool) -> void:
+func _update_animation(active: bool) -> void:
 	if _anim == null or _move_anim == "":
 		return
-	if moving:
+	if active:
 		# Play the run cycle (resume it if it was paused).
 		if not _anim.is_playing() or _anim.current_animation != _move_anim:
 			_anim.play(_move_anim)

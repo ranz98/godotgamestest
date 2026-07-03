@@ -11,3 +11,6 @@
 /build/
 *.exe
 *.pck
+
+# Separate Vercel web build (its own git repo)
+/vercelversion/

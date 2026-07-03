@@ -127,9 +127,9 @@ func apply_quality(preset: int) -> void:
 		env.ssao_enabled = true
 		env.volumetric_fog_enabled = true
 		vp.msaa_3d = Viewport.MSAA_2X
-	else:                # Ultra — everything
+	else:                # Ultra — max GI + AA, no smeary SSR
 		env.sdfgi_enabled = true
-		env.ssr_enabled = true
+		env.ssr_enabled = false
 		env.ssil_enabled = true
 		env.ssao_enabled = true
 		env.volumetric_fog_enabled = true

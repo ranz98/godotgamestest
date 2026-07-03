@@ -1,0 +1,64 @@
+[gd_scene load_steps=11 format=3 uid="uid://c8n2wq5xk4mvp"]
+
+[ext_resource type="Script" uid="uid://dnte6l5gq7vsl" path="res://player.gd" id="1_player"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_1"]
+
+[sub_resource type="Sky" id="Sky_1"]
+sky_material = SubResource("SkyMaterial_1")
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 2
+sky = SubResource("Sky_1")
+tonemap_mode = 2
+ambient_light_source = 3
+
+[sub_resource type="BoxMesh" id="GroundMesh_1"]
+size = Vector3(40, 1, 40)
+
+[sub_resource type="StandardMaterial3D" id="GroundMaterial_1"]
+albedo_color = Color(0.35, 0.5, 0.32, 1)
+
+[sub_resource type="BoxShape3D" id="GroundShape_1"]
+size = Vector3(40, 1, 40)
+
+[sub_resource type="CapsuleMesh" id="PlayerMesh_1"]
+
+[sub_resource type="StandardMaterial3D" id="PlayerMaterial_1"]
+albedo_color = Color(0.2, 0.45, 0.9, 1)
+
+[sub_resource type="CapsuleShape3D" id="PlayerShape_1"]
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 10, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 12, 16)
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+mesh = SubResource("GroundMesh_1")
+surface_material_override/0 = SubResource("GroundMaterial_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("GroundShape_1")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+script = ExtResource("1_player")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
+mesh = SubResource("PlayerMesh_1")
+surface_material_override/0 = SubResource("PlayerMaterial_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
+shape = SubResource("PlayerShape_1")

@@ -31,7 +31,7 @@ var net_loco: int = 0  # 0 idle, 1 walk, 2 run
 @onready var _tag_area: Area3D = $TagArea
 @onready var _nametag: Label3D = $Nametag
 
-var _game: Node
+var _game: HideSeekGame
 var _hint_label: Label
 var _hidden: bool = false
 var _hide_cam_rotation: Vector3 = Vector3.ZERO
@@ -43,7 +43,7 @@ func _enter_tree() -> void:
 	set_multiplayer_authority(str(name).to_int())
 
 func _ready() -> void:
-	_game = get_tree().get_first_node_in_group("game")
+	_game = get_tree().get_first_node_in_group("game") as HideSeekGame
 	_hint_label = get_tree().get_first_node_in_group("hint_label")
 	_setup_loop(_run_model)
 	_setup_loop(_walk_model)

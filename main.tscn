@@ -1,6 +1,11 @@
-[gd_scene load_steps=36 format=3 uid="uid://c8n2wq5xk4mvp"]
+[gd_scene load_steps=41 format=3 uid="uid://c8n2wq5xk4mvp"]
 
 [ext_resource type="Script" path="res://game.gd" id="1_game"]
+[ext_resource type="Texture2D" path="res://assets/textures/ground.png" id="2_ground"]
+[ext_resource type="Texture2D" path="res://assets/textures/concrete.png" id="3_concrete"]
+[ext_resource type="Texture2D" path="res://assets/textures/wood.png" id="4_wood"]
+[ext_resource type="Texture2D" path="res://assets/textures/rock.png" id="5_rock"]
+[ext_resource type="Texture2D" path="res://assets/textures/metal.png" id="6_metal"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_1"]
 sky_top_color = Color(0.42, 0.47, 0.55, 1)
@@ -46,29 +51,53 @@ adjustment_contrast = 1.1
 adjustment_saturation = 0.88
 
 [sub_resource type="StandardMaterial3D" id="MatGrass"]
-albedo_color = Color(0.2, 0.21, 0.18, 1)
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("2_ground")
 roughness = 1.0
+uv1_scale = Vector3(0.2, 0.2, 0.2)
+uv1_triplanar = true
+uv1_world_triplanar = true
 
 [sub_resource type="StandardMaterial3D" id="MatStone"]
-albedo_color = Color(0.38, 0.39, 0.41, 1)
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("3_concrete")
 roughness = 0.9
+uv1_scale = Vector3(0.3, 0.3, 0.3)
+uv1_triplanar = true
+uv1_world_triplanar = true
 
 [sub_resource type="StandardMaterial3D" id="MatWood"]
-albedo_color = Color(0.26, 0.21, 0.15, 1)
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("4_wood")
 roughness = 0.95
+uv1_scale = Vector3(0.4, 0.4, 0.4)
+uv1_triplanar = true
+uv1_world_triplanar = true
 
 [sub_resource type="StandardMaterial3D" id="MatAccent"]
-albedo_color = Color(0.3, 0.34, 0.4, 1)
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("6_metal")
 metallic = 0.4
 roughness = 0.5
+uv1_scale = Vector3(0.3, 0.3, 0.3)
+uv1_triplanar = true
+uv1_world_triplanar = true
 
 [sub_resource type="StandardMaterial3D" id="MatWarm"]
-albedo_color = Color(0.42, 0.3, 0.18, 1)
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("4_wood")
 roughness = 0.9
+uv1_scale = Vector3(0.4, 0.4, 0.4)
+uv1_triplanar = true
+uv1_world_triplanar = true
 
 [sub_resource type="StandardMaterial3D" id="MatDark"]
-albedo_color = Color(0.3, 0.31, 0.33, 1)
+albedo_color = Color(1, 1, 1, 1)
+albedo_texture = ExtResource("5_rock")
 roughness = 1.0
+uv1_scale = Vector3(0.2, 0.2, 0.2)
+uv1_triplanar = true
+uv1_world_triplanar = true
 
 [sub_resource type="StandardMaterial3D" id="MatBush"]
 albedo_color = Color(0.14, 0.2, 0.13, 1)

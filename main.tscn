@@ -1,10 +1,6 @@
-[gd_scene load_steps=41 format=3 uid="uid://c8n2wq5xk4mvp"]
+[gd_scene load_steps=36 format=3 uid="uid://c8n2wq5xk4mvp"]
 
-[ext_resource type="Script" uid="uid://dnte6l5gq7vsl" path="res://player.gd" id="1_player"]
-[ext_resource type="PackedScene" uid="uid://024vb82ym36i" path="res://assets/character.glb" id="2_character"]
-[ext_resource type="Script" path="res://camera.gd" id="3_camera"]
-[ext_resource type="PackedScene" path="res://assets/character_idle.glb" id="4_idle"]
-[ext_resource type="PackedScene" path="res://assets/character_walk.glb" id="5_walk"]
+[ext_resource type="Script" path="res://game.gd" id="1_game"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_1"]
 
@@ -117,12 +113,25 @@ radius = 0.5
 [sub_resource type="BoxShape3D" id="ZoneShape"]
 size = Vector3(2.4, 2.2, 2.4)
 
-[sub_resource type="BoxShape3D" id="DetectorShape"]
-size = Vector3(1, 1.6, 1)
-
-[sub_resource type="CapsuleShape3D" id="PlayerShape_1"]
+[sub_resource type="SceneReplicationConfig" id="GameSync"]
+properties/0/path = NodePath(".:phase")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+properties/1/path = NodePath(".:time_left")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:winner")
+properties/2/spawn = true
+properties/2/replication_mode = 2
+properties/3/path = NodePath(".:roles")
+properties/3/spawn = true
+properties/3/replication_mode = 2
+properties/4/path = NodePath(".:caught")
+properties/4/spawn = true
+properties/4/replication_mode = 2
 
 [node name="Main" type="Node3D"]
+script = ExtResource("1_game")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_1")
@@ -396,44 +405,107 @@ monitoring = false
 [node name="Col" type="CollisionShape3D" parent="ShadowZones/Zone6"]
 shape = SubResource("ZoneShape")
 
-[node name="Player" type="CharacterBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-script = ExtResource("1_player")
-status_label_path = NodePath("../UI/StatusLabel")
-
-[node name="ModelRoot" type="Node3D" parent="Player"]
-
-[node name="RunModel" parent="Player/ModelRoot" instance=ExtResource("2_character")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
-
-[node name="WalkModel" parent="Player/ModelRoot" instance=ExtResource("5_walk")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
-
-[node name="IdleModel" parent="Player/ModelRoot" instance=ExtResource("4_idle")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
-shape = SubResource("PlayerShape_1")
-
-[node name="ShadowDetector" type="Area3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
-collision_layer = 0
-collision_mask = 2
-
-[node name="Col" type="CollisionShape3D" parent="Player/ShadowDetector"]
-shape = SubResource("DetectorShape")
-
-[node name="CameraPivot" type="Node3D" parent="Player"]
-transform = Transform3D(1, 0, 0, 0, 0.921061, 0.389418, 0, -0.389418, 0.921061, 0, 1.5, 0)
-script = ExtResource("3_camera")
-
-[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
+[node name="MenuCamera" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 12, 16)
 current = true
 
-[node name="UI" type="CanvasLayer" parent="."]
+[node name="SpawnPoints" type="Node3D" parent="."]
 
-[node name="StatusLabel" type="Label" parent="UI"]
+[node name="Spawn0" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="Spawn1" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 2)
+
+[node name="Spawn2" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, 2)
+
+[node name="Spawn3" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, -2)
+
+[node name="Spawn4" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
+
+[node name="Spawn5" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1, 0)
+
+[node name="Spawn6" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1, 0)
+
+[node name="Spawn7" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 4)
+
+[node name="Players" type="Node3D" parent="."]
+
+[node name="PlayerSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Players")
+
+[node name="GameSync" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("GameSync")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Lobby" type="CenterContainer" parent="HUD"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Menu" type="VBoxContainer" parent="HUD/Lobby"]
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="HUD/Lobby/Menu"]
+theme_override_font_sizes/font_size = 40
+text = "HIDE & SEEK"
+horizontal_alignment = 1
+
+[node name="HostButton" type="Button" parent="HUD/Lobby/Menu"]
+text = "Host Game"
+
+[node name="IpEdit" type="LineEdit" parent="HUD/Lobby/Menu"]
+placeholder_text = "Host IP (blank = 127.0.0.1)"
+
+[node name="JoinButton" type="Button" parent="HUD/Lobby/Menu"]
+text = "Join Game"
+
+[node name="StartButton" type="Button" parent="HUD/Lobby/Menu"]
+text = "Start Match"
+
+[node name="CountLabel" type="Label" parent="HUD/Lobby/Menu"]
+text = "Players: 0"
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="HUD/Lobby/Menu"]
+horizontal_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="HUD"]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -80.0
+offset_top = 12.0
+offset_right = 80.0
+offset_bottom = 60.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 34
+text = "1:30"
+horizontal_alignment = 1
+
+[node name="RoleLabel" type="Label" parent="HUD"]
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 280.0
+offset_bottom = 44.0
+theme_override_font_sizes/font_size = 22
+text = "You are: HIDER"
+
+[node name="Announce" type="Label" parent="HUD"]
+anchor_top = 0.22
+anchor_right = 1.0
+anchor_bottom = 0.22
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 40
+text = ""
+horizontal_alignment = 1
+
+[node name="HintLabel" type="Label" parent="HUD" groups=["hint_label"]]
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -442,6 +514,21 @@ offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_font_sizes/font_size = 22
-text = "Find a shadow and press E to hide"
+text = ""
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Result" type="CenterContainer" parent="HUD"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Box" type="VBoxContainer" parent="HUD/Result"]
+theme_override_constants/separation = 16
+
+[node name="WinnerLabel" type="Label" parent="HUD/Result/Box"]
+theme_override_font_sizes/font_size = 48
+text = "HIDERS WIN!"
+horizontal_alignment = 1
+
+[node name="RematchButton" type="Button" parent="HUD/Result/Box"]
+text = "Rematch"

@@ -1,0 +1,77 @@
+[gd_scene load_steps=10 format=3 uid="uid://b7hs3xk1player"]
+
+[ext_resource type="Script" uid="uid://dnte6l5gq7vsl" path="res://player.gd" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://024vb82ym36i" path="res://assets/character.glb" id="2_character"]
+[ext_resource type="PackedScene" path="res://assets/character_walk.glb" id="3_walk"]
+[ext_resource type="PackedScene" path="res://assets/character_idle.glb" id="4_idle"]
+[ext_resource type="Script" path="res://camera.gd" id="5_camera"]
+
+[sub_resource type="CapsuleShape3D" id="PlayerShape"]
+
+[sub_resource type="BoxShape3D" id="DetectorShape"]
+size = Vector3(1, 1.6, 1)
+
+[sub_resource type="SphereShape3D" id="TagShape"]
+radius = 1.5
+
+[sub_resource type="SceneReplicationConfig" id="ReplConfig"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath("ModelRoot:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:net_hidden")
+properties/2/spawn = true
+properties/2/replication_mode = 2
+properties/3/path = NodePath(".:net_loco")
+properties/3/spawn = true
+properties/3/replication_mode = 2
+
+[node name="Player" type="CharacterBody3D" groups=["player"]]
+script = ExtResource("1_player")
+
+[node name="ModelRoot" type="Node3D" parent="."]
+
+[node name="RunModel" parent="ModelRoot" instance=ExtResource("2_character")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+
+[node name="WalkModel" parent="ModelRoot" instance=ExtResource("3_walk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+
+[node name="IdleModel" parent="ModelRoot" instance=ExtResource("4_idle")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("PlayerShape")
+
+[node name="ShadowDetector" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
+collision_layer = 0
+collision_mask = 2
+
+[node name="Col" type="CollisionShape3D" parent="ShadowDetector"]
+shape = SubResource("DetectorShape")
+
+[node name="TagArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="Col" type="CollisionShape3D" parent="TagArea"]
+shape = SubResource("TagShape")
+
+[node name="CameraPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.921061, 0.389418, 0, -0.389418, 0.921061, 0, 1.5, 0)
+script = ExtResource("5_camera")
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
+
+[node name="Nametag" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+billboard = 1
+font_size = 64
+text = ""
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("ReplConfig")

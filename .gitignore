@@ -9,3 +9,5 @@
 
 # Exported builds
 /build/
+*.exe
+*.pck

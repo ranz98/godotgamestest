@@ -1,7 +1,8 @@
-[gd_scene load_steps=10 format=3 uid="uid://c8n2wq5xk4mvp"]
+[gd_scene load_steps=30 format=3 uid="uid://c8n2wq5xk4mvp"]
 
 [ext_resource type="Script" uid="uid://dnte6l5gq7vsl" path="res://player.gd" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://024vb82ym36i" path="res://assets/character.glb" id="2_character"]
+[ext_resource type="Script" path="res://camera.gd" id="3_camera"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_1"]
 
@@ -14,14 +15,77 @@ sky = SubResource("Sky_1")
 tonemap_mode = 2
 ambient_light_source = 3
 
-[sub_resource type="BoxMesh" id="GroundMesh_1"]
-size = Vector3(40, 1, 40)
-
-[sub_resource type="StandardMaterial3D" id="GroundMaterial_1"]
+[sub_resource type="StandardMaterial3D" id="MatGrass"]
 albedo_color = Color(0.35, 0.5, 0.32, 1)
 
-[sub_resource type="BoxShape3D" id="GroundShape_1"]
-size = Vector3(40, 1, 40)
+[sub_resource type="StandardMaterial3D" id="MatStone"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+
+[sub_resource type="StandardMaterial3D" id="MatWood"]
+albedo_color = Color(0.45, 0.3, 0.18, 1)
+
+[sub_resource type="StandardMaterial3D" id="MatAccent"]
+albedo_color = Color(0.25, 0.45, 0.85, 1)
+
+[sub_resource type="StandardMaterial3D" id="MatWarm"]
+albedo_color = Color(0.85, 0.5, 0.2, 1)
+
+[sub_resource type="StandardMaterial3D" id="MatDark"]
+albedo_color = Color(0.4, 0.4, 0.45, 1)
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+size = Vector3(60, 1, 60)
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(60, 1, 60)
+
+[sub_resource type="BoxMesh" id="WallLongMesh"]
+size = Vector3(60, 3, 1)
+
+[sub_resource type="BoxShape3D" id="WallLongShape"]
+size = Vector3(60, 3, 1)
+
+[sub_resource type="BoxMesh" id="WallSideMesh"]
+size = Vector3(1, 3, 60)
+
+[sub_resource type="BoxShape3D" id="WallSideShape"]
+size = Vector3(1, 3, 60)
+
+[sub_resource type="BoxMesh" id="PlatformMesh"]
+size = Vector3(12, 3, 12)
+
+[sub_resource type="BoxShape3D" id="PlatformShape"]
+size = Vector3(12, 3, 12)
+
+[sub_resource type="BoxMesh" id="RampMesh"]
+size = Vector3(4, 0.5, 8.54)
+
+[sub_resource type="BoxShape3D" id="RampShape"]
+size = Vector3(4, 0.5, 8.54)
+
+[sub_resource type="CylinderMesh" id="PillarMesh"]
+top_radius = 0.6
+bottom_radius = 0.6
+height = 5.0
+
+[sub_resource type="CylinderShape3D" id="PillarShape"]
+height = 5.0
+radius = 0.6
+
+[sub_resource type="BoxMesh" id="CrateMesh"]
+size = Vector3(2, 2, 2)
+
+[sub_resource type="BoxShape3D" id="CrateShape"]
+size = Vector3(2, 2, 2)
+
+[sub_resource type="CylinderMesh" id="HillMesh"]
+top_radius = 6.0
+bottom_radius = 6.0
+height = 2.0
+
+[sub_resource type="CylinderShape3D" id="HillShape"]
+height = 2.0
+radius = 6.0
 
 [sub_resource type="CapsuleShape3D" id="PlayerShape_1"]
 
@@ -36,17 +100,163 @@ shadow_enabled = true
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 12, 16)
+script = ExtResource("3_camera")
+target_path = NodePath("../Player")
 
-[node name="Ground" type="StaticBody3D" parent="."]
+[node name="World" type="StaticBody3D" parent="."]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+[node name="Ground" type="MeshInstance3D" parent="World"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-mesh = SubResource("GroundMesh_1")
-surface_material_override/0 = SubResource("GroundMaterial_1")
+mesh = SubResource("GroundMesh")
+surface_material_override/0 = SubResource("MatGrass")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+[node name="GroundCol" type="CollisionShape3D" parent="World"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
-shape = SubResource("GroundShape_1")
+shape = SubResource("GroundShape")
+
+[node name="WallN" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -30)
+mesh = SubResource("WallLongMesh")
+surface_material_override/0 = SubResource("MatStone")
+
+[node name="WallNCol" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -30)
+shape = SubResource("WallLongShape")
+
+[node name="WallS" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 30)
+mesh = SubResource("WallLongMesh")
+surface_material_override/0 = SubResource("MatStone")
+
+[node name="WallSCol" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 30)
+shape = SubResource("WallLongShape")
+
+[node name="WallE" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 1.5, 0)
+mesh = SubResource("WallSideMesh")
+surface_material_override/0 = SubResource("MatStone")
+
+[node name="WallECol" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 1.5, 0)
+shape = SubResource("WallSideShape")
+
+[node name="WallW" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1.5, 0)
+mesh = SubResource("WallSideMesh")
+surface_material_override/0 = SubResource("MatStone")
+
+[node name="WallWCol" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1.5, 0)
+shape = SubResource("WallSideShape")
+
+[node name="Platform" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1.5, 16)
+mesh = SubResource("PlatformMesh")
+surface_material_override/0 = SubResource("MatAccent")
+
+[node name="PlatformCol" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1.5, 16)
+shape = SubResource("PlatformShape")
+
+[node name="Ramp" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 0.936, 0.351, 0, -0.351, 0.936, 16, 1.5, 6)
+mesh = SubResource("RampMesh")
+surface_material_override/0 = SubResource("MatWarm")
+
+[node name="RampCol" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 0.936, 0.351, 0, -0.351, 0.936, 16, 1.5, 6)
+shape = SubResource("RampShape")
+
+[node name="Pillar1" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 2.5, 10)
+mesh = SubResource("PillarMesh")
+surface_material_override/0 = SubResource("MatWood")
+
+[node name="Pillar1Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 2.5, 10)
+shape = SubResource("PillarShape")
+
+[node name="Pillar2" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 2.5, 16)
+mesh = SubResource("PillarMesh")
+surface_material_override/0 = SubResource("MatWood")
+
+[node name="Pillar2Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 2.5, 16)
+shape = SubResource("PillarShape")
+
+[node name="Pillar3" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 2.5, 19)
+mesh = SubResource("PillarMesh")
+surface_material_override/0 = SubResource("MatWood")
+
+[node name="Pillar3Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 2.5, 19)
+shape = SubResource("PillarShape")
+
+[node name="Pillar4" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2.5, -6)
+mesh = SubResource("PillarMesh")
+surface_material_override/0 = SubResource("MatWood")
+
+[node name="Pillar4Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2.5, -6)
+shape = SubResource("PillarShape")
+
+[node name="Pillar5" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 2.5, 6)
+mesh = SubResource("PillarMesh")
+surface_material_override/0 = SubResource("MatWood")
+
+[node name="Pillar5Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 2.5, 6)
+shape = SubResource("PillarShape")
+
+[node name="Pillar6" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2.5, 9)
+mesh = SubResource("PillarMesh")
+surface_material_override/0 = SubResource("MatWood")
+
+[node name="Pillar6Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 2.5, 9)
+shape = SubResource("PillarShape")
+
+[node name="Crate1" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -12)
+mesh = SubResource("CrateMesh")
+surface_material_override/0 = SubResource("MatWarm")
+
+[node name="Crate1Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -12)
+shape = SubResource("CrateShape")
+
+[node name="Crate2" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1, -16)
+mesh = SubResource("CrateMesh")
+surface_material_override/0 = SubResource("MatWarm")
+
+[node name="Crate2Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1, -16)
+shape = SubResource("CrateShape")
+
+[node name="Crate3" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1, -18)
+mesh = SubResource("CrateMesh")
+surface_material_override/0 = SubResource("MatWarm")
+
+[node name="Crate3Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1, -18)
+shape = SubResource("CrateShape")
+
+[node name="Hill" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1, -16)
+mesh = SubResource("HillMesh")
+surface_material_override/0 = SubResource("MatDark")
+
+[node name="HillCol" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1, -16)
+shape = SubResource("HillShape")
 
 [node name="Player" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)

@@ -1,3 +1,8 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Binary game assets kept out of git (regenerate locally or track via Git LFS).
+# The scene references res://assets/character.glb, so a fresh clone needs this
+# folder restored before main.tscn will run.
+/assets/

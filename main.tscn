@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://c8n2wq5xk4mvp"]
+[gd_scene load_steps=39 format=3 uid="uid://c8n2wq5xk4mvp"]
 
 [ext_resource type="Script" uid="uid://dnte6l5gq7vsl" path="res://player.gd" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://024vb82ym36i" path="res://assets/character.glb" id="2_character"]
@@ -32,6 +32,9 @@ albedo_color = Color(0.85, 0.5, 0.2, 1)
 
 [sub_resource type="StandardMaterial3D" id="MatDark"]
 albedo_color = Color(0.4, 0.4, 0.45, 1)
+
+[sub_resource type="StandardMaterial3D" id="MatBush"]
+albedo_color = Color(0.2, 0.42, 0.22, 1)
 
 [sub_resource type="BoxMesh" id="GroundMesh"]
 size = Vector3(60, 1, 60)
@@ -86,6 +89,34 @@ height = 2.0
 [sub_resource type="CylinderShape3D" id="HillShape"]
 height = 2.0
 radius = 6.0
+
+[sub_resource type="BoxMesh" id="SmallBoxMesh"]
+size = Vector3(0.8, 0.8, 0.8)
+
+[sub_resource type="BoxShape3D" id="SmallBoxShape"]
+size = Vector3(0.8, 0.8, 0.8)
+
+[sub_resource type="SphereMesh" id="RockMesh"]
+radius = 0.4
+height = 0.8
+
+[sub_resource type="SphereShape3D" id="RockShape"]
+radius = 0.4
+
+[sub_resource type="CylinderMesh" id="ConeMesh"]
+top_radius = 0.05
+bottom_radius = 0.5
+height = 1.0
+
+[sub_resource type="CylinderShape3D" id="ConeShape"]
+height = 1.0
+radius = 0.5
+
+[sub_resource type="BoxShape3D" id="ZoneShape"]
+size = Vector3(2.4, 2.2, 2.4)
+
+[sub_resource type="BoxShape3D" id="DetectorShape"]
+size = Vector3(1, 1.6, 1)
 
 [sub_resource type="CapsuleShape3D" id="PlayerShape_1"]
 
@@ -253,15 +284,134 @@ surface_material_override/0 = SubResource("MatDark")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1, -16)
 shape = SubResource("HillShape")
 
+[node name="Rock1" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.4, 4)
+mesh = SubResource("RockMesh")
+surface_material_override/0 = SubResource("MatStone")
+
+[node name="Rock1Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0.4, 4)
+shape = SubResource("RockShape")
+
+[node name="Rock2" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.4, -3)
+mesh = SubResource("RockMesh")
+surface_material_override/0 = SubResource("MatStone")
+
+[node name="Rock2Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.4, -3)
+shape = SubResource("RockShape")
+
+[node name="SmallBox1" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.4, -8)
+mesh = SubResource("SmallBoxMesh")
+surface_material_override/0 = SubResource("MatWarm")
+
+[node name="SmallBox1Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.4, -8)
+shape = SubResource("SmallBoxShape")
+
+[node name="SmallBox2" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.4, 2)
+mesh = SubResource("SmallBoxMesh")
+surface_material_override/0 = SubResource("MatWarm")
+
+[node name="SmallBox2Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.4, 2)
+shape = SubResource("SmallBoxShape")
+
+[node name="Cone1" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.5, 10)
+mesh = SubResource("ConeMesh")
+surface_material_override/0 = SubResource("MatBush")
+
+[node name="Cone1Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.5, 10)
+shape = SubResource("ConeShape")
+
+[node name="Cone2" type="MeshInstance3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.5, -12)
+mesh = SubResource("ConeMesh")
+surface_material_override/0 = SubResource("MatBush")
+
+[node name="Cone2Col" type="CollisionShape3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0.5, -12)
+shape = SubResource("ConeShape")
+
+[node name="ShadowZones" type="Node3D" parent="."]
+
+[node name="Zone1" type="Area3D" parent="ShadowZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1, -8.5)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+
+[node name="Col" type="CollisionShape3D" parent="ShadowZones/Zone1"]
+shape = SubResource("ZoneShape")
+
+[node name="Zone2" type="Area3D" parent="ShadowZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1, 3.5)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+
+[node name="Col" type="CollisionShape3D" parent="ShadowZones/Zone2"]
+shape = SubResource("ZoneShape")
+
+[node name="Zone3" type="Area3D" parent="ShadowZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 1, 6.5)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+
+[node name="Col" type="CollisionShape3D" parent="ShadowZones/Zone3"]
+shape = SubResource("ZoneShape")
+
+[node name="Zone4" type="Area3D" parent="ShadowZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1, -23)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+
+[node name="Col" type="CollisionShape3D" parent="ShadowZones/Zone4"]
+shape = SubResource("ZoneShape")
+
+[node name="Zone5" type="Area3D" parent="ShadowZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -14.5)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+
+[node name="Col" type="CollisionShape3D" parent="ShadowZones/Zone5"]
+shape = SubResource("ZoneShape")
+
+[node name="Zone6" type="Area3D" parent="ShadowZones"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1, -20.5)
+collision_layer = 2
+collision_mask = 0
+monitoring = false
+
+[node name="Col" type="CollisionShape3D" parent="ShadowZones/Zone6"]
+shape = SubResource("ZoneShape")
+
 [node name="Player" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 script = ExtResource("1_player")
+status_label_path = NodePath("../UI/StatusLabel")
 
 [node name="CharacterModel" parent="Player" instance=ExtResource("2_character")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
 shape = SubResource("PlayerShape_1")
+
+[node name="ShadowDetector" type="Area3D" parent="Player"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
+collision_layer = 0
+collision_mask = 2
+
+[node name="Col" type="CollisionShape3D" parent="Player/ShadowDetector"]
+shape = SubResource("DetectorShape")
 
 [node name="CameraPivot" type="Node3D" parent="Player"]
 transform = Transform3D(1, 0, 0, 0, 0.921061, 0.389418, 0, -0.389418, 0.921061, 0, 1.5, 0)
@@ -270,3 +420,18 @@ script = ExtResource("3_camera")
 [node name="Camera3D" type="Camera3D" parent="Player/CameraPivot"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3)
 current = true
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="StatusLabel" type="Label" parent="UI"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -56.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 22
+text = "Find a shadow and press E to hide"
+horizontal_alignment = 1
+vertical_alignment = 1

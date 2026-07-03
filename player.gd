@@ -15,16 +15,25 @@ extends CharacterBody3D
 @export var camera_pivot_path: NodePath = ^"CameraPivot"
 ## The visual model that rotates to face the movement direction.
 @export var model_path: NodePath = ^"CharacterModel"
+## Area3D that reports whether the player is standing in a shadow zone.
+@export var shadow_detector_path: NodePath = ^"ShadowDetector"
+## Optional on-screen label used for the hide/shadow hints.
+@export var status_label_path: NodePath
 
 # Located at runtime so this works no matter what the GLB's internal nodes are called.
 var _anim: AnimationPlayer
 var _move_anim: String = ""
 var _cam_pivot: Node3D
 var _model: Node3D
+var _shadow_detector: Area3D
+var _label: Label
+var _hidden: bool = false
 
 func _ready() -> void:
 	_cam_pivot = get_node_or_null(camera_pivot_path)
 	_model = get_node_or_null(model_path)
+	_shadow_detector = get_node_or_null(shadow_detector_path)
+	_label = get_node_or_null(status_label_path)
 	_anim = _find_animation_player(self)
 	if _anim:
 		# Use the first "real" clip (skip Godot's auto-generated RESET track).
@@ -65,6 +74,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		_default_mode(delta, input_dir)
 
+	_handle_hide()
 	move_and_slide()
 
 # LEFT mouse held: A/D spin the character in place, W/S drive along its facing.
@@ -132,3 +142,35 @@ func _update_animation(active: bool) -> void:
 	elif _anim.is_playing():
 		# Freeze the run cycle when standing still.
 		_anim.pause()
+
+# --- Hide-in-shadow mechanic ---
+
+func _handle_hide() -> void:
+	var in_shadow := _is_in_shadow()
+	if Input.is_action_just_pressed("hide"):
+		if _hidden:
+			_set_hidden(false)      # E again -> reappear
+		elif in_shadow:
+			_set_hidden(true)       # E while in a shadow -> vanish
+	_update_status_label(in_shadow)
+
+func _is_in_shadow() -> bool:
+	# No detector configured -> allow hiding anywhere (fail-open).
+	if _shadow_detector == null:
+		return true
+	return not _shadow_detector.get_overlapping_areas().is_empty()
+
+func _set_hidden(value: bool) -> void:
+	_hidden = value
+	if _model:
+		_model.visible = not value
+
+func _update_status_label(in_shadow: bool) -> void:
+	if _label == null:
+		return
+	if _hidden:
+		_label.text = "Hidden in the shadows — press E to reappear"
+	elif in_shadow:
+		_label.text = "In shadow — press E to hide"
+	else:
+		_label.text = "Find a shadow and press E to hide"

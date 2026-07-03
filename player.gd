@@ -12,7 +12,7 @@ extends CharacterBody3D
 @export var jump_velocity: float = 8.0
 ## Mid-air steering. 0 = keep takeoff momentum (no walking/running in the air),
 ## 1 = full ground-like control. Low values feel like a committed, realistic jump.
-@export var air_control: float = 0.3
+@export var air_control: float = 0.0
 ## How quickly the model turns to face its movement direction.
 @export var turn_speed: float = 12.0
 ## How fast the character spins while holding the left mouse button (radians/sec).

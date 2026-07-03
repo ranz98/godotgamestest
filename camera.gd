@@ -11,12 +11,7 @@ extends Node3D
 @export var max_pitch: float = 0.3
 
 func _unhandled_input(event: InputEvent) -> void:
+	# Orbit only when the cursor is captured (game.gd owns the mouse mode).
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotation.y -= event.relative.x * mouse_sensitivity
 		rotation.x = clamp(rotation.x - event.relative.y * mouse_sensitivity, min_pitch, max_pitch)
-	elif event.is_action_pressed("ui_cancel"):
-		# Esc frees the cursor so you can leave the window.
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode == Input.MOUSE_MODE_VISIBLE:
-		# Click back in the window to resume mouse-look.
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED

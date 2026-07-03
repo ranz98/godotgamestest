@@ -55,11 +55,9 @@ func _ready() -> void:
 	_spawn_pos = position
 	var local := is_multiplayer_authority()
 	_camera.current = local
-	# Mouse-look/orbit is enabled per-phase (during HIDING/SEEKING) for the local
-	# player, so the lobby and result menus stay clickable.
-	_cam_pivot.set_process_unhandled_input(false)
-	if local:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	# Only the local player orbits; actual orbiting is gated by the captured mouse,
+	# which game.gd manages (captured in-match, free in menus/lobby).
+	_cam_pivot.set_process_unhandled_input(local)
 	_apply_visuals()
 
 func _setup_loop(model: Node) -> void:
@@ -90,9 +88,11 @@ func _physics_process(delta: float) -> void:
 		_apply_visuals()
 		return
 
-	_update_hint_and_hide()
+	var menu := _game != null and _game.menu_open()
+	if not menu:
+		_update_hint_and_hide()
 
-	if not _can_move():
+	if menu or not _can_move():
 		velocity.x = 0.0
 		velocity.z = 0.0
 		if not is_on_floor():
@@ -197,9 +197,6 @@ func _handle_phase_change() -> void:
 	_prev_phase = ph
 	if not is_multiplayer_authority():
 		return
-	var in_match := ph == HideSeekGame.Phase.HIDING or ph == HideSeekGame.Phase.SEEKING
-	_cam_pivot.set_process_unhandled_input(in_match)
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if in_match else Input.MOUSE_MODE_VISIBLE
 	if ph == HideSeekGame.Phase.HIDING:
 		# Fresh round: reveal, return to spawn, stop moving.
 		_set_hidden(false)

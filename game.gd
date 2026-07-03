@@ -55,6 +55,13 @@ var scores: Dictionary = {}        # peer_id -> points, kept across the series
 @onready var _result: Control = $HUD/Result
 @onready var _winner_label: Label = $HUD/Result/Box/WinnerLabel
 @onready var _rematch_btn: Button = $HUD/Result/Box/RematchButton
+@onready var _world_env: WorldEnvironment = $WorldEnvironment
+@onready var _pause_menu: Control = $HUD/PauseMenu
+@onready var _good_btn: Button = $HUD/PauseMenu/Center/Box/GoodButton
+@onready var _best_btn: Button = $HUD/PauseMenu/Center/Box/BestButton
+@onready var _ultra_btn: Button = $HUD/PauseMenu/Center/Box/UltraButton
+@onready var _current_label: Label = $HUD/PauseMenu/Center/Box/CurrentLabel
+@onready var _resume_btn: Button = $HUD/PauseMenu/Center/Box/ResumeButton
 
 var _net_active: bool = false
 var _last_announced_phase: int = -1
@@ -63,6 +70,8 @@ var _announce_text: String = ""
 var _announce_timer: float = 0.0
 var _prev_roles: Dictionary = {}  # last round's roles, so the next round can swap
 var _start_hiders: int = 0        # hiders at round start (for the seeker-win check)
+var _menu_open: bool = false      # Esc graphics menu
+var _quality: int = 2             # 0 Good, 1 Best, 2 Ultra
 
 func _ready() -> void:
 	randomize()
@@ -78,7 +87,53 @@ func _ready() -> void:
 	_start_btn.pressed.connect(start_match)
 	_rematch_btn.pressed.connect(start_match)
 	_mode_btn.pressed.connect(toggle_mode)
+	_good_btn.pressed.connect(apply_quality.bind(0))
+	_best_btn.pressed.connect(apply_quality.bind(1))
+	_ultra_btn.pressed.connect(apply_quality.bind(2))
+	_resume_btn.pressed.connect(_close_menu)
+	apply_quality(2)
 	_update_hud()
+
+func _unhandled_input(event: InputEvent) -> void:
+	# Esc toggles the graphics menu while connected.
+	if _net_active and event.is_action_pressed("ui_cancel"):
+		_menu_open = not _menu_open
+		get_viewport().set_input_as_handled()
+
+func _close_menu() -> void:
+	_menu_open = false
+
+func menu_open() -> bool:
+	return _menu_open
+
+# Applies a graphics preset live (0 Good, 1 Best, 2 Ultra).
+func apply_quality(preset: int) -> void:
+	_quality = preset
+	var env: Environment = _world_env.environment
+	var vp := get_viewport()
+	if preset == 0:      # Good — fastest
+		env.sdfgi_enabled = false
+		env.ssr_enabled = false
+		env.ssil_enabled = false
+		env.ssao_enabled = true
+		env.volumetric_fog_enabled = false
+		vp.msaa_3d = Viewport.MSAA_DISABLED
+	elif preset == 1:    # Best — balanced
+		env.sdfgi_enabled = false
+		env.ssr_enabled = false
+		env.ssil_enabled = true
+		env.ssao_enabled = true
+		env.volumetric_fog_enabled = true
+		vp.msaa_3d = Viewport.MSAA_2X
+	else:                # Ultra — everything
+		env.sdfgi_enabled = true
+		env.ssr_enabled = true
+		env.ssil_enabled = true
+		env.ssao_enabled = true
+		env.volumetric_fog_enabled = true
+		vp.msaa_3d = Viewport.MSAA_4X
+	if _current_label:
+		_current_label.text = "Current: %s" % ["Good", "Best", "Ultra"][preset]
 
 func toggle_mode() -> void:
 	if not multiplayer.is_server():
@@ -236,7 +291,20 @@ func _process(delta: float) -> void:
 	if multiplayer.is_server():
 		_server_tick(delta)
 	_announce_timer = max(0.0, _announce_timer - delta)
+	_update_mouse_and_menu()
 	_update_hud()
+
+# Single source of truth for the mouse cursor + pause-menu visibility.
+func _update_mouse_and_menu() -> void:
+	_pause_menu.visible = _menu_open
+	if not _net_active:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	elif _menu_open:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	elif phase == Phase.HIDING or phase == Phase.SEEKING:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _server_tick(delta: float) -> void:
 	if phase == Phase.HIDING:

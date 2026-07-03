@@ -10,6 +10,9 @@ extends CharacterBody3D
 @export var run_speed: float = 8.5
 ## Upward velocity applied when jumping.
 @export var jump_velocity: float = 8.0
+## Mid-air steering. 0 = keep takeoff momentum (no walking/running in the air),
+## 1 = full ground-like control. Low values feel like a committed, realistic jump.
+@export var air_control: float = 0.3
 ## How quickly the model turns to face its movement direction.
 @export var turn_speed: float = 12.0
 ## How fast the character spins while holding the left mouse button (radians/sec).
@@ -148,12 +151,18 @@ func _default_mode(delta: float, input_dir: Vector2, move_speed: float, running:
 	_set_loco(direction != Vector3.ZERO, running)
 
 func _apply_planar_velocity(direction: Vector3, move_speed: float) -> void:
-	if direction != Vector3.ZERO:
-		velocity.x = direction.x * move_speed
-		velocity.z = direction.z * move_speed
+	var target_x := direction.x * move_speed
+	var target_z := direction.z * move_speed
+	if is_on_floor():
+		# Grounded: snappy, direct control (instant start/stop/turn).
+		velocity.x = target_x
+		velocity.z = target_z
 	else:
-		velocity.x = move_toward(velocity.x, 0.0, run_speed)
-		velocity.z = move_toward(velocity.z, 0.0, run_speed)
+		# Airborne: keep momentum, allow only limited steering. You can't start
+		# walking/running or stop on a dime while jumping.
+		var accel := run_speed * air_control * get_physics_process_delta_time()
+		velocity.x = move_toward(velocity.x, target_x, accel)
+		velocity.z = move_toward(velocity.z, target_z, accel)
 
 func _camera_relative_direction(input_dir: Vector2) -> Vector3:
 	if input_dir == Vector2.ZERO:

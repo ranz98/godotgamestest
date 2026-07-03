@@ -118,6 +118,10 @@ func _physics_process(delta: float) -> void:
 	else:
 		_default_mode(delta, input_dir, move_speed, running)
 
+	# Airborne: stop the walk/run leg cycle so it doesn't look like air-walking.
+	if not is_on_floor():
+		net_loco = 0
+
 	_seeker_try_tag()
 	move_and_slide()
 	_apply_visuals()

@@ -1,9 +1,10 @@
-[gd_scene load_steps=40 format=3 uid="uid://c8n2wq5xk4mvp"]
+[gd_scene load_steps=41 format=3 uid="uid://c8n2wq5xk4mvp"]
 
 [ext_resource type="Script" uid="uid://dnte6l5gq7vsl" path="res://player.gd" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://024vb82ym36i" path="res://assets/character.glb" id="2_character"]
 [ext_resource type="Script" path="res://camera.gd" id="3_camera"]
 [ext_resource type="PackedScene" path="res://assets/character_idle.glb" id="4_idle"]
+[ext_resource type="PackedScene" path="res://assets/character_walk.glb" id="5_walk"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_1"]
 
@@ -403,6 +404,9 @@ status_label_path = NodePath("../UI/StatusLabel")
 [node name="ModelRoot" type="Node3D" parent="Player"]
 
 [node name="RunModel" parent="Player/ModelRoot" instance=ExtResource("2_character")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+
+[node name="WalkModel" parent="Player/ModelRoot" instance=ExtResource("5_walk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 
 [node name="IdleModel" parent="Player/ModelRoot" instance=ExtResource("4_idle")]

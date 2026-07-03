@@ -13,18 +13,21 @@ extends CharacterBody3D
 @export var model_yaw_offset_deg: float = 0.0
 ## Node whose horizontal facing defines "forward" for movement (the camera pivot).
 @export var camera_pivot_path: NodePath = ^"CameraPivot"
-## The visual model that rotates to face the movement direction.
-@export var model_path: NodePath = ^"CharacterModel"
+## Pivot holding the character models; rotates to face the movement direction.
+@export var model_path: NodePath = ^"ModelRoot"
+## The running model (shown while moving).
+@export var run_model_path: NodePath = ^"ModelRoot/RunModel"
+## The standing/idle model (shown while still).
+@export var idle_model_path: NodePath = ^"ModelRoot/IdleModel"
 ## Area3D that reports whether the player is standing in a shadow zone.
 @export var shadow_detector_path: NodePath = ^"ShadowDetector"
 ## Optional on-screen label used for the hide/shadow hints.
 @export var status_label_path: NodePath
 
-# Located at runtime so this works no matter what the GLB's internal nodes are called.
-var _anim: AnimationPlayer
-var _move_anim: String = ""
 var _cam_pivot: Node3D
 var _model: Node3D
+var _run_model: Node3D
+var _idle_model: Node3D
 var _shadow_detector: Area3D
 var _label: Label
 var _hidden: bool = false
@@ -32,18 +35,27 @@ var _hidden: bool = false
 func _ready() -> void:
 	_cam_pivot = get_node_or_null(camera_pivot_path)
 	_model = get_node_or_null(model_path)
+	_run_model = get_node_or_null(run_model_path)
+	_idle_model = get_node_or_null(idle_model_path)
 	_shadow_detector = get_node_or_null(shadow_detector_path)
 	_label = get_node_or_null(status_label_path)
-	_anim = _find_animation_player(self)
-	if _anim:
-		# Use the first "real" clip (skip Godot's auto-generated RESET track).
-		for anim_name in _anim.get_animation_list():
-			if anim_name != "RESET":
-				_move_anim = anim_name
-				break
-		# Make the movement clip loop so running cycles continuously.
-		if _move_anim != "":
-			_anim.get_animation(_move_anim).loop_mode = Animation.LOOP_LINEAR
+	# Loop-and-play both models' clips continuously; we just toggle which is shown.
+	_setup_loop(_run_model)
+	_setup_loop(_idle_model)
+	_update_locomotion(false)
+
+# Finds the AnimationPlayer inside `model`, loops its first real clip, and plays it.
+func _setup_loop(model: Node) -> void:
+	if model == null:
+		return
+	var ap := _find_animation_player(model)
+	if ap == null:
+		return
+	for anim_name in ap.get_animation_list():
+		if anim_name != "RESET":
+			ap.get_animation(anim_name).loop_mode = Animation.LOOP_LINEAR
+			ap.play(anim_name)
+			break
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
 	for child in node.get_children():
@@ -79,8 +91,7 @@ func _physics_process(delta: float) -> void:
 
 # LEFT mouse held: A/D spin the character in place, W/S drive along its facing.
 func _spin_mode(delta: float, input_dir: Vector2) -> void:
-	var spinning := absf(input_dir.x) > 0.01
-	if _model and spinning:
+	if _model and absf(input_dir.x) > 0.01:
 		_model.rotation.y -= input_dir.x * spin_speed * delta
 
 	# Drive forward/back along the model's own facing (its +Z is forward).
@@ -91,13 +102,13 @@ func _spin_mode(delta: float, input_dir: Vector2) -> void:
 		direction = facing.normalized() * -input_dir.y
 
 	_apply_planar_velocity(direction)
-	_update_animation(direction != Vector3.ZERO or spinning)
+	_update_locomotion(direction != Vector3.ZERO)
 
 # RIGHT mouse held: move camera-relative WITHOUT turning the model (strafe).
 func _strafe_mode(input_dir: Vector2) -> void:
 	var direction := _camera_relative_direction(input_dir)
 	_apply_planar_velocity(direction)
-	_update_animation(direction != Vector3.ZERO)
+	_update_locomotion(direction != Vector3.ZERO)
 
 # No button: camera-relative movement, model turns to face the travel direction.
 func _default_mode(delta: float, input_dir: Vector2) -> void:
@@ -106,7 +117,7 @@ func _default_mode(delta: float, input_dir: Vector2) -> void:
 		var target_yaw := atan2(direction.x, direction.z) + deg_to_rad(model_yaw_offset_deg)
 		_model.rotation.y = lerp_angle(_model.rotation.y, target_yaw, turn_speed * delta)
 	_apply_planar_velocity(direction)
-	_update_animation(direction != Vector3.ZERO)
+	_update_locomotion(direction != Vector3.ZERO)
 
 # Sets horizontal velocity toward `direction`, or decelerates to a stop if zero.
 func _apply_planar_velocity(direction: Vector3) -> void:
@@ -132,16 +143,16 @@ func _camera_relative_direction(input_dir: Vector2) -> Vector3:
 	# input_dir.y is -1 for "up"/W, so negate it to move forward.
 	return (forward * -input_dir.y + right * input_dir.x).normalized()
 
-func _update_animation(active: bool) -> void:
-	if _anim == null or _move_anim == "":
+# Shows the run model while moving, the idle model while standing still.
+func _update_locomotion(moving: bool) -> void:
+	if _idle_model == null:
+		# No separate idle model available; just keep the run model shown.
+		if _run_model:
+			_run_model.visible = true
 		return
-	if active:
-		# Play the run cycle (resume it if it was paused).
-		if not _anim.is_playing() or _anim.current_animation != _move_anim:
-			_anim.play(_move_anim)
-	elif _anim.is_playing():
-		# Freeze the run cycle when standing still.
-		_anim.pause()
+	if _run_model:
+		_run_model.visible = moving
+	_idle_model.visible = not moving
 
 # --- Hide-in-shadow mechanic ---
 

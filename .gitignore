@@ -6,3 +6,6 @@
 # The scene references res://assets/character.glb, so a fresh clone needs this
 # folder restored before main.tscn will run.
 /assets/
+
+# Exported builds
+/build/

@@ -53,6 +53,9 @@ var caught: Array = []             # peer_ids of caught hiders
 
 var _net_active: bool = false
 var _last_announced_phase: int = -1
+var _spawn_index: int = 0
+var _announce_text: String = ""
+var _announce_timer: float = 0.0
 
 func _ready() -> void:
 	randomize()
@@ -129,7 +132,10 @@ func _on_server_disconnected() -> void:
 
 func _add_player(id: int) -> void:
 	# Server-only. Spawns a player for peer `id`; the spawner replicates it.
-	var idx := _players.get_child_count()
+	# Use a monotonic index (get_child_count() lags behind queued spawns and
+	# would land two quick joiners on the same spawn marker).
+	var idx := _spawn_index
+	_spawn_index += 1
 	_spawner.spawn({"id": id, "pos": _spawn_position(idx)})
 
 func _spawn_player(data: Dictionary) -> Node:
@@ -177,6 +183,7 @@ func _assign_roles(ids: Array) -> void:
 func _process(delta: float) -> void:
 	if multiplayer.is_server():
 		_server_tick(delta)
+	_announce_timer = max(0.0, _announce_timer - delta)
 	_update_hud()
 
 func _server_tick(delta: float) -> void:
@@ -189,6 +196,9 @@ func _server_tick(delta: float) -> void:
 		time_left -= delta
 		if time_left <= 0.0:
 			_end_match(1)  # time up -> hiders win
+		else:
+			# Re-check each tick so a hider disconnecting also resolves the win.
+			_check_seeker_win()
 
 # Called by seekers (client -> host) when their tag area overlaps a hider.
 @rpc("any_peer", "call_remote", "reliable")
@@ -291,18 +301,22 @@ func _update_hud() -> void:
 			_role_label.text = "You are: HIDER"
 			_role_label.modulate = Color(0.5, 0.7, 1)
 
-		# Big transient announcement on phase changes.
+		# Big transient announcement on phase changes (shown for a few seconds).
 		if phase != _last_announced_phase:
 			_last_announced_phase = phase
 			if phase == Phase.HIDING:
-				_announce.text = "HIDE!  Seekers are frozen..."
+				_announce_text = "HIDE!  Seekers are frozen..."
+				_announce_timer = 4.0
 			elif phase == Phase.SEEKING:
-				_announce.text = "SEEKERS RELEASED!"
-		elif phase == Phase.SEEKING:
-			_announce.text = ""
+				_announce_text = "SEEKERS RELEASED!"
+				_announce_timer = 3.0
 
 		if is_caught(my_id):
 			_announce.text = "You were caught! Spectating..."
+		elif _announce_timer > 0.0:
+			_announce.text = _announce_text
+		else:
+			_announce.text = ""
 
 	if ended:
 		_last_announced_phase = -1

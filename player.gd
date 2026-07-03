@@ -35,6 +35,8 @@ var _game: Node
 var _hint_label: Label
 var _hidden: bool = false
 var _hide_cam_rotation: Vector3 = Vector3.ZERO
+var _prev_phase: int = -1
+var _spawn_pos: Vector3
 
 func _enter_tree() -> void:
 	# The node is named after the owning peer id; claim authority from it.
@@ -47,11 +49,14 @@ func _ready() -> void:
 	_setup_loop(_walk_model)
 	_setup_loop(_idle_model)
 
+	_spawn_pos = position
 	var local := is_multiplayer_authority()
 	_camera.current = local
-	_cam_pivot.set_process_unhandled_input(local)  # only the local player orbits
+	# Mouse-look/orbit is enabled per-phase (during HIDING/SEEKING) for the local
+	# player, so the lobby and result menus stay clickable.
+	_cam_pivot.set_process_unhandled_input(false)
 	if local:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	_apply_visuals()
 
 func _setup_loop(model: Node) -> void:
@@ -76,6 +81,7 @@ func _find_animation_player(node: Node) -> AnimationPlayer:
 	return null
 
 func _physics_process(delta: float) -> void:
+	_handle_phase_change()
 	if not is_multiplayer_authority():
 		# Remote players: visuals are driven purely by replicated state.
 		_apply_visuals()
@@ -171,6 +177,26 @@ func _set_loco(moving: bool, running: bool) -> void:
 
 # --- Roles / phase helpers -------------------------------------------
 
+# Reacts to match phase changes: resets per-round state and manages mouse
+# capture for the local player (so lobby/result menus stay clickable).
+func _handle_phase_change() -> void:
+	if _game == null:
+		return
+	var ph: int = _game.phase
+	if ph == _prev_phase:
+		return
+	_prev_phase = ph
+	if not is_multiplayer_authority():
+		return
+	var in_match := ph == HideSeekGame.Phase.HIDING or ph == HideSeekGame.Phase.SEEKING
+	_cam_pivot.set_process_unhandled_input(in_match)
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if in_match else Input.MOUSE_MODE_VISIBLE
+	if ph == HideSeekGame.Phase.HIDING:
+		# Fresh round: reveal, return to spawn, stop moving.
+		_set_hidden(false)
+		position = _spawn_pos
+		velocity = Vector3.ZERO
+
 func _my_id() -> int:
 	return get_multiplayer_authority()
 
@@ -244,6 +270,8 @@ func _set_hidden(value: bool) -> void:
 # --- Seeker tagging ---------------------------------------------------
 
 func _seeker_try_tag() -> void:
+	if _game == null:
+		return
 	if not _is_seeker():
 		return
 	if _game.phase != HideSeekGame.Phase.SEEKING:

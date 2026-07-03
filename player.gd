@@ -67,6 +67,20 @@ func _find_animation_player(node: Node) -> AnimationPlayer:
 	return null
 
 func _physics_process(delta: float) -> void:
+	# Handle hide/appear first so E is always responsive.
+	_handle_hide()
+
+	# While hidden, the character is locked in place at the hide spot — no moving,
+	# jumping, or spinning. Only the camera may still orbit. Pressing E reappears
+	# you exactly where you hid.
+	if _hidden:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if not is_on_floor():
+			velocity += get_gravity() * delta
+		move_and_slide()
+		return
+
 	# Apply gravity while airborne.
 	if not is_on_floor():
 		velocity += get_gravity() * delta
@@ -86,7 +100,6 @@ func _physics_process(delta: float) -> void:
 	else:
 		_default_mode(delta, input_dir)
 
-	_handle_hide()
 	move_and_slide()
 
 # LEFT mouse held: A/D spin the character in place, W/S drive along its facing.

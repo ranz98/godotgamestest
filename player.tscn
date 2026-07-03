@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://b7hs3xk1player"]
+[gd_scene format=3 uid="uid://rvbwmffyt3ir"]
 
 [ext_resource type="Script" uid="uid://dnte6l5gq7vsl" path="res://player.gd" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://024vb82ym36i" path="res://assets/character.glb" id="2_character"]
@@ -34,13 +34,13 @@ script = ExtResource("1_player")
 [node name="ModelRoot" type="Node3D" parent="."]
 
 [node name="RunModel" parent="ModelRoot" instance=ExtResource("2_character")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+transform = Transform3D(1.35, 0, 0, 0, 1.15, 0, 0, 0, 1.35, 0, -1, 0)
 
 [node name="WalkModel" parent="ModelRoot" instance=ExtResource("3_walk")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+transform = Transform3D(1.35, 0, 0, 0, 1.15, 0, 0, 0, 1.35, 0, -1, 0)
 
 [node name="IdleModel" parent="ModelRoot" instance=ExtResource("4_idle")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+transform = Transform3D(1.35, 0, 0, 0, 1.15, 0, 0, 0, 1.35, 0, -1, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("PlayerShape")

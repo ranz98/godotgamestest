@@ -2,8 +2,9 @@ extends CharacterBody3D
 
 ## Ground movement speed in meters per second.
 @export var speed: float = 6.0
-## Upward velocity applied when jumping.
-@export var jump_velocity: float = 4.5
+## Upward velocity applied when jumping. ~8 clears roughly 3.3m — enough to land
+## on the crates/plateau (2m) and the platform (3m).
+@export var jump_velocity: float = 8.0
 ## How quickly the model turns to face its movement direction (higher = snappier).
 @export var turn_speed: float = 12.0
 ## Extra yaw applied to the model, in degrees. Set to 180 if the character runs backwards.

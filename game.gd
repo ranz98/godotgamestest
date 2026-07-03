@@ -56,6 +56,7 @@ var _last_announced_phase: int = -1
 var _spawn_index: int = 0
 var _announce_text: String = ""
 var _announce_timer: float = 0.0
+var _prev_roles: Dictionary = {}  # last round's roles, so the next round can swap
 
 func _ready() -> void:
 	randomize()
@@ -169,16 +170,49 @@ func start_match() -> void:
 	time_left = hide_time
 
 func _assign_roles(ids: Array) -> void:
-	roles = {}
+	var new_roles: Dictionary = {}
+	if _prev_roles.is_empty():
+		# First match: random assignment (1 seeker for a pair, ~1/4 otherwise).
+		for id in ids:
+			new_roles[id] = Role.HIDER
+		if ids.size() >= 2:
+			var num_seekers: int = max(1, ids.size() / 4)
+			var shuffled := ids.duplicate()
+			shuffled.shuffle()
+			for i in range(num_seekers):
+				new_roles[shuffled[i]] = Role.SEEKER
+	else:
+		# Rematch: swap everyone's role. Anyone who joined since last round
+		# defaults to previously-a-seeker so they become a HIDER this round.
+		for id in ids:
+			var prev: int = _prev_roles.get(id, Role.SEEKER)
+			new_roles[id] = Role.HIDER if prev == Role.SEEKER else Role.SEEKER
+		_ensure_split(ids, new_roles)
+	roles = new_roles
+	_prev_roles = new_roles.duplicate()
+
+# Guarantees at least one seeker and one hider when there are 2+ players
+# (a swap can otherwise leave everyone on the same side).
+func _ensure_split(ids: Array, r: Dictionary) -> void:
+	if ids.size() < 2:
+		return
+	var seekers := 0
+	var hiders := 0
 	for id in ids:
-		roles[id] = Role.HIDER
-	# Need at least two players for a seeker; solo = hider (for testing).
-	if ids.size() >= 2:
-		var num_seekers: int = max(1, ids.size() / 4)
-		var shuffled := ids.duplicate()
-		shuffled.shuffle()
-		for i in range(num_seekers):
-			roles[shuffled[i]] = Role.SEEKER
+		if r[id] == Role.SEEKER:
+			seekers += 1
+		else:
+			hiders += 1
+	if seekers == 0:
+		for id in ids:
+			if r[id] == Role.HIDER:
+				r[id] = Role.SEEKER
+				return
+	elif hiders == 0:
+		for id in ids:
+			if r[id] == Role.SEEKER:
+				r[id] = Role.HIDER
+				return
 
 func _process(delta: float) -> void:
 	if multiplayer.is_server():
